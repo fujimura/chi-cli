@@ -18,17 +18,16 @@ $ package-name foo-bar-baz
 ## Options
 
 ```
+package-name --help
+package-name - a template for your cli application
+
+Usage: package-name [-v|--version] [-l|--show-line-number]
+  Hello.
+
+Available options:
   -h,--help                Show this help text
   -v,--version             Print version information
-  -p,--package-name ARG    Name of package
-  -m,--moduleName ARG      Name of Module
-  -a,--author ARG          Name of the project's author
-  -e,--email ARG           Email address of the maintainer
-  -r,--repository ARG      Template repository
-  --configuration-file ARG Use specified configuration file
-  --initialize-git-repository
-                           Initialize with git repository
-  --after-command ARG      The command to be run after generation
+  -l,--show-line-number    Show line number
 ```
 
 ## Contributing
