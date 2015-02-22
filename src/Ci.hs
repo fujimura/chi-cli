@@ -1,4 +1,4 @@
-module ModuleName
+module Ci
   (
     run
   ) where

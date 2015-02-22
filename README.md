@@ -1,4 +1,4 @@
-package-name
+ci
 ===========
 
 Template for command line application written in Haskell
@@ -12,16 +12,16 @@ This is a template for command line application written in Haskell.
 ### Basic Example
 
 ```
-$ package-name foo-bar-baz
+$ ci foo-bar-baz
 ```
 
 ## Options
 
 ```
-package-name --help
-package-name - a template for your cli application
+ci --help
+ci - a template for your cli application
 
-Usage: package-name [-v|--version] [-l|--show-line-number]
+Usage: ci [-v|--version] [-l|--show-line-number]
   Hello.
 
 Available options:
