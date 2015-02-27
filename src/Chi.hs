@@ -1,4 +1,4 @@
-module Ci
+module Chi
   (
     run
   ) where

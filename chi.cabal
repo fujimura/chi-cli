@@ -1,12 +1,12 @@
-name: ci
+name: chi
 version: 1.2.0.0
 cabal-version: >=1.8
 build-type: Simple
 license: BSD3
 license-file: LICENSE
 maintainer: me@fujimuradaisuke.com
-homepage: https://github.com/fujimura/ci
-bug-reports: https://github.com/fujimura/ci/issues
+homepage: https://github.com/fujimura/chi
+bug-reports: https://github.com/fujimura/chi/issues
 synopsis: Generate scaffold for cabal project
 description: This application generates a scaffold for Haskell project from a Git repository.
 category: Distribution
@@ -14,9 +14,9 @@ author: Fujimura Daisuke
  
 source-repository head
     type: git
-    location: https://github.com/fujimura/ci.git
+    location: https://github.com/fujimura/chi.git
  
-executable ci
+executable chi
     build-depends:
         base ==4.*,
         ansi-wl-pprint -any,

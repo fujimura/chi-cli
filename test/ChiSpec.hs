@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module CiSpec ( main, spec ) where
+module ChiSpec ( main, spec ) where
 
 import qualified Cli
 import           SpecHelper
