@@ -7,7 +7,12 @@ import qualified CommandLineOption
 import           Types
 
 buildOption :: CommandLineOption -> IO Option
-buildOption copt = return Option { source = CommandLineOption.source copt
-                                 , showLineNumber = CommandLineOption.showLineNumber copt
-                                 , debug = False
-                                 }
+buildOption copt = undefined
+
+--
+--  let packageName = CommandLineOption.packageName copt
+--  return Option { packageName = packageName
+--                               , moduleName  = fromJu
+--                               , showLineNumber = CommandLineOption.showLineNumber copt
+--                               , debug = False
+--                               }

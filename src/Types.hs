@@ -1,9 +1,18 @@
-module Types
-    ( Option(..)
-    ) where
+module Types where
 
 data Option = Option
-             { source         :: FilePath
-             , showLineNumber :: Bool
-             , debug          :: Bool
+             { packageName :: String
+             , moduleName  :: String
+             , author      :: String
+             , email       :: String
+             , year        :: String
+             , source      :: Source
              } deriving (Eq,Ord,Show)
+
+type File = (FilePath,String)
+
+data Modified a = Modified a a deriving (Eq,Ord,Show)
+
+type ConvertedFile = Modified File
+
+data Source = Repo String deriving (Eq,Ord,Show)

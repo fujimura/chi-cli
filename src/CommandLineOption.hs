@@ -6,11 +6,13 @@ module CommandLineOption
 import           Options.Applicative
 
 data CommandLineOption = CommandLineOption
-                       { source         :: String
-                       , showLineNumber :: Bool
+                       { packageName :: String
+                       , repo         :: Maybe String
+                       , cabalPackage :: Maybe String
                        }
 
 commandLineOption :: Parser CommandLineOption
 commandLineOption = CommandLineOption
-   <$> argument str (help "Source")
-   <*> switch (short 'l' <> long "show-line-number" <> help "Show line number")
+   <$> argument str (help "Package name")
+   <*> optional (strOption (short 'r' <> long "repository" <> help "Repository of template"))
+   <*> optional (strOption (short 'c' <> long "cabal-package" <> help "Name of cabal package"))
