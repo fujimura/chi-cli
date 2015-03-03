@@ -35,6 +35,9 @@ spec = around_ (hSilence [stdout]) $ do
       actual <- readFile "foo-bar-baz/foo-bar-baz.cabal"
       actual `shouldContain` "name: foo-bar-baz"
 
+  it "should replace 'packange_name' in file content with first argument" pending
+  -- This is necessary, because of Paths_ module
+
   it "should replace 'ModuleName' in file path to '-m' or '--module-name'" $ do
     root <- getCurrentDirectory
     inTestDirectory $ do
