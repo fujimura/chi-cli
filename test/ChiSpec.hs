@@ -12,6 +12,7 @@ import           System.Exit         (ExitCode (..))
 import           System.FilePath     (joinPath, (</>))
 import           System.IO           (stdout)
 import           System.IO.Silently  (capture, hSilence)
+import System.Process(system)
 
 main :: IO ()
 main = hspec spec
@@ -22,14 +23,16 @@ spec = do
   it "should clone from git repository with '-r'" pending
   it "should replace 'packange-name' in file path with first argument" $ do
     root <- getCurrentDirectory
-    inTestDirectory $ hSilence [stdout] $ do
+    inTestDirectory $ hSilence [] $ do
+      system "tree"
       Cli.run ["foo-bar-baz", "-r", (root </> "test" </> "template")]
+      system "tree"
 
       doesFileExist "foo-bar-baz/foo-bar-baz.cabal" `shouldReturn` True
 
   it "should replace 'packange-name' in file content with first argument" $ do
     root <- getCurrentDirectory
-    inTestDirectory $ hSilence [stdout] $ do
+    inTestDirectory $ hSilence [] $ do
       Cli.run ["foo-bar-baz", "-r", (root </> "test" </> "template")]
       actual <- readFile "foo-bar-baz/foo-bar-baz.cabal"
       actual `shouldContain` "name: foo-bar-baz"
