@@ -5,14 +5,15 @@ module ChiSpec ( main, spec ) where
 import qualified Cli
 import           SpecHelper
 
+import           Control.Monad
+import           System.Directory   (doesDirectoryExist, doesFileExist,
+                                     getCurrentDirectory)
+import           System.Exit        (ExitCode (..))
+import           System.FilePath    (joinPath, (</>))
+import           System.IO          (stdout)
+import           System.IO.Silently (capture, hSilence)
+import           System.Process     (system)
 import           Test.Hspec
-import           System.Directory    (doesDirectoryExist, doesFileExist,
-                                      getCurrentDirectory)
-import           System.Exit         (ExitCode (..))
-import           System.FilePath     (joinPath, (</>))
-import           System.IO           (stdout)
-import           System.IO.Silently  (capture, hSilence)
-import System.Process(system)
 
 main :: IO ()
 main = hspec spec
@@ -23,29 +24,58 @@ spec = do
   it "should clone from git repository with '-r'" pending
   it "should replace 'packange-name' in file path with first argument" $ do
     root <- getCurrentDirectory
-    inTestDirectory $ hSilence [] $ do
-      system "tree"
+    inTestDirectory $ hSilence [stdout] $ do
       Cli.run ["foo-bar-baz", "-r", (root </> "test" </> "template")]
-      system "tree"
-
       doesFileExist "foo-bar-baz/foo-bar-baz.cabal" `shouldReturn` True
 
   it "should replace 'packange-name' in file content with first argument" $ do
     root <- getCurrentDirectory
-    inTestDirectory $ hSilence [] $ do
+    inTestDirectory $ hSilence [stdout] $ do
       Cli.run ["foo-bar-baz", "-r", (root </> "test" </> "template")]
       actual <- readFile "foo-bar-baz/foo-bar-baz.cabal"
       actual `shouldContain` "name: foo-bar-baz"
 
-  it "should replace 'ModuleName' in file path to '-m' or '--module-name'" pending
-  it "should replace 'ModuleName' in file content to '-m' or '--module-name'" pending
-  it "should replace 'ModuleName' in file path to to capitalized package name, if not specified" pending
-  it "should replace 'ModuleName' in file content to capitalized package name, if not specified" pending
-  it "should replace '$author' in file content to '-a' or '--author'" pending
-  it "should replace '$author' in file content to the user.name in git config, if not specified" pending
-  it "should replace '$email' in file content to '-e' or '--email'" pending
-  it "should replace '$email' in file content to the user.email in git config, if not specified" pending
+  it "should replace 'ModuleName' in file path to '-m' or '--module-name'" $ do
+    root <- getCurrentDirectory
+    inTestDirectory $ hSilence [stdout] $ do
+      Cli.run ["foo-bar-baz", "-m", "Something.Special", "-r", (root </> "test" </> "template")]
+      doesFileExist "foo-bar-baz/src/Something/Special.hs" `shouldReturn` True
+
+  it "should replace 'ModuleName' in file content to '-m' or '--module-name'" $ do
+    root <- getCurrentDirectory
+    inTestDirectory $ hSilence [stdout] $ do
+      Cli.run ["foo-bar-baz", "-m", "Something.Special", "-r", (root </> "test" </> "template")]
+      actual <- readFile "foo-bar-baz/src/Something/Special.hs"
+      actual `shouldContain` "module Something.Special"
+
+  it "should replace 'ModuleName' in file path to to capitalized package name, if not specified" $ do
+    root <- getCurrentDirectory
+    inTestDirectory $ hSilence [stdout] $ do
+      Cli.run ["foo-bar-baz", "-r", (root </> "test" </> "template")]
+      doesFileExist "foo-bar-baz/src/Foo/Bar/Baz.hs" `shouldReturn` True
+
+  it "should replace 'ModuleName' in file content to capitalized package name, if not specified" $ do
+    root <- getCurrentDirectory
+    inTestDirectory $ hSilence [stdout] $ do
+      Cli.run ["foo-bar-baz", "-r", (root </> "test" </> "template")]
+      actual <- readFile "foo-bar-baz/src/Foo/Bar/Baz.hs"
+      actual `shouldContain` "module Foo.Bar.Baz"
+
+  it "should update 'author' of .cabal with the user.name in git config" $ do
+    root <- getCurrentDirectory
+    inTestDirectory $ withLocalGitConfig [("user.name", "\"John Doe\"")] $ hSilence [stdout] $ do
+      Cli.run ["foo-bar-baz", "-r", (root </> "test" </> "template")]
+      actual <- readFile "foo-bar-baz/foo-bar-baz.cabal"
+      actual `shouldContain` "author: John Doe"
+
+  it "should replace 'maintainer' in .cabal with the user.email in git config" $ do
+    root <- getCurrentDirectory
+    inTestDirectory $ withLocalGitConfig [("user.email", "\"john@doe.com\"")] $ hSilence [stdout] $ do
+      Cli.run ["foo-bar-baz", "-r", (root </> "test" </> "template")]
+      actual <- readFile "foo-bar-baz/foo-bar-baz.cabal"
+      actual `shouldContain` "maintainer: john@doe.com"
+
+  it "should replace '$author' in file content to the user.name in git config" pending
+  it "should replace '$email' in file content to the user.email in git config" pending
   it "should replace '$year' in file content to current year" pending
   it "should run command specified with '--after-command'" pending
-
-  it "should generate files under the directory named `package-name`" pending

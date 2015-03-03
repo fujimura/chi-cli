@@ -6,26 +6,34 @@ module Chi
 import qualified Git
 import           Types
 
-import           Control.Exception   (bracket_)
-import           System.Directory
-import           System.IO.Temp      (withSystemTempDirectory)
-import           Data.List.Split (splitOn)
+import           Control.Exception                           (bracket_)
 import           Control.Monad
-import           Data.List               ((\\), intersperse)
-import           Data.Maybe              (fromMaybe)
-import qualified Data.Text               as T (pack, unpack)
-import           Data.Text.Encoding      (decodeUtf8)
-import           Data.Text.Lazy.Encoding (encodeUtf8)
-import           System.Directory        (createDirectoryIfMissing)
-import           System.FilePath         (dropFileName, joinPath, normalise,
-                                          splitPath)
-import           System.Process          (system)
+import           Data.List                                   (intersperse, (\\))
+import           Data.List.Split                             (splitOn)
+import           Data.Maybe                                  (fromMaybe)
+import qualified Data.Text                                   as T (pack, unpack)
+import           Data.Text.Encoding                          (decodeUtf8)
+import           Data.Text.Lazy.Encoding                     (encodeUtf8)
+import           Distribution.PackageDescription             (GenericPackageDescription (GenericPackageDescription))
+import qualified Distribution.PackageDescription             as PackageDescription
+import           Distribution.PackageDescription.Parse       (readPackageDescription)
+import           Distribution.PackageDescription.PrettyPrint (writeGenericPackageDescription)
+import           Distribution.Simple.Utils                   (findPackageDesc)
+import           Distribution.Verbosity                      as Verbosity (Verbosity, normal)
+import           System.Directory
+import           System.Directory                            (createDirectoryIfMissing)
+import           System.FilePath                             (dropFileName,
+                                                              joinPath,
+                                                              normalise,
+                                                              splitPath, (</>))
+import           System.IO.Temp                              (withSystemTempDirectory)
+import           System.Process                              (system)
 
 run :: Option -> IO ()
 run option = do
     files <- fetch (source option)
-    print files
     writeFiles (convertFiles option files)
+    updateCabalFile option
 
 fetch :: Source -> IO [File]
 fetch (Repo repo) = do
@@ -66,10 +74,16 @@ convert :: Option -> File -> Modified File
 convert option file@(path,contents) = Modified (rewritePath path, substitute contents) file
   where
     substitute :: String -> String
-    substitute = id
+    substitute = foldl1 (.) $ map (uncurry replace) [ ("package-name", packageName option)
+                                                    , ("ModuleName", moduleName option)
+                                                    , ("$author", Types.author option)
+                                                    , ("$email", email option)
+                                                    , ("$year", year option)
+                                                    ]
     rewritePath :: FilePath -> FilePath
-    rewritePath = replacePackageName . replaceModuleName
+    rewritePath = addDirectoryName . replacePackageName . replaceModuleName
       where
+        addDirectoryName   = (packageName option </>)
         replacePackageName = replace "package-name" (packageName option)
         replaceModuleName  = replace "ModuleName" $ moduleNameToFilePath (moduleName option)
 
@@ -93,3 +107,15 @@ replace a b = foldl1 (++) . intersperse b . splitOn a
 write :: File -> IO ()
 write (path,contents) =
     createDirectoryIfMissing True (dropFileName path) >> writeFile path contents
+
+updateCabalFile :: Option -> IO ()
+updateCabalFile opts = do
+  path <- findPackageDesc (packageName opts)
+  gPkgDesc@GenericPackageDescription { PackageDescription.packageDescription = pd } <-
+    readPackageDescription normal path
+
+  let pd' = pd { PackageDescription.author = Types.author opts
+               , PackageDescription.maintainer = Types.email opts
+               }
+
+  writeGenericPackageDescription path gPkgDesc { PackageDescription.packageDescription = pd' }

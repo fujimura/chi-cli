@@ -9,20 +9,21 @@ import           Types
 
 import           Control.Applicative
 import           Data.Char           (toUpper)
-import           Data.Maybe          (fromJust)
+import           Data.Maybe          (fromJust, fromMaybe)
 import           Data.Time.Calendar  (toGregorian)
 import           Data.Time.Clock     (getCurrentTime, utctDay)
 
 buildOption :: CommandLineOption -> IO Option
 buildOption copt = do
     let packageName' = CommandLineOption.packageName copt
+        moduleName' = fromMaybe (modularize packageName') (CommandLineOption.moduleName copt)
         source' = fromJust $ CommandLineOption.repo copt -- TODO
 
     year' <- getCurrentYear
     author' <- Git.config "user.name"
     email' <- Git.config "user.email"
     return  Option { packageName = packageName'
-                 , moduleName  = modularize packageName'
+                 , moduleName  = moduleName'
                  , author      = author'
                  , email       = email'
                  , year        = year'

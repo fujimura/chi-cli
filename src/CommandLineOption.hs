@@ -7,6 +7,7 @@ import           Options.Applicative
 
 data CommandLineOption = CommandLineOption
                        { packageName :: String
+                       , moduleName :: Maybe String
                        , repo         :: Maybe String
                -- TODO        , cabalPackage :: Maybe String
                        }
@@ -14,5 +15,6 @@ data CommandLineOption = CommandLineOption
 commandLineOption :: Parser CommandLineOption
 commandLineOption = CommandLineOption
    <$> argument str (help "Package name")
+   <*> optional (strOption (short 'm' <> long "module-name" <> help "Name of Module"))
    <*> optional (strOption (short 'r' <> long "repository" <> help "Repository of template"))
 --   <*> optional (strOption (short 'c' <> long "cabal-package" <> help "Name of cabal package"))

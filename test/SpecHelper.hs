@@ -3,11 +3,13 @@
 module SpecHelper where
 
 import           Control.Exception  (bracket, bracket_)
+import           Control.Monad
 import           System.Directory   (createDirectoryIfMissing,
                                      getCurrentDirectory,
                                      removeDirectoryRecursive,
                                      setCurrentDirectory)
 import           System.Environment (lookupEnv, setEnv, unsetEnv)
+import           System.Process     (system)
 
 withEnv :: String -> String -> IO a -> IO a
 withEnv k v action = do
@@ -32,5 +34,11 @@ inTestDirectory action = do
 
 testDirectory :: String
 testDirectory = "test_project"
+
+withLocalGitConfig :: [(String, String)] -> IO () -> IO ()
+withLocalGitConfig confs action = do
+    _ <- system "git init"
+    _ <- forM confs $ \(k,v) -> system ("git config " ++ k ++ " " ++ v)
+    action
 
 {-# ANN module "HLint: Redundant do" #-}

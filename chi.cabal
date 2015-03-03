@@ -20,6 +20,7 @@ executable chi
     build-depends:
         base ==4.*,
         ansi-wl-pprint -any,
+        Cabal >= 1.18,
         bytestring -any,
         directory -any,
         filepath -any,
@@ -46,6 +47,7 @@ test-suite spec
         doctest -any,
         filepath -any,
         hspec >=2.0.0,
+        Cabal >= 1.18,
         optparse-applicative >=0.10.0,
         parsec -any,
         process -any,
