@@ -75,7 +75,21 @@ spec = do
       actual <- readFile "foo-bar-baz/foo-bar-baz.cabal"
       actual `shouldContain` "maintainer: john@doe.com"
 
-  it "should replace '$author' in file content to the user.name in git config" pending
-  it "should replace '$email' in file content to the user.email in git config" pending
-  it "should replace '$year' in file content to current year" pending
-  it "should run command specified with '--after-command'" pending
+  it "should replace '$author' in file content to the user.name in git config" $ do
+    root <- getCurrentDirectory
+    inTestDirectory $ withLocalGitConfig [("user.name", "\"John Doe\"")] $ hSilence [stdout] $ do
+      Cli.run ["foo-bar-baz", "-r", (root </> "test" </> "template")]
+      actual <- readFile "foo-bar-baz/LICENSE"
+      actual `shouldContain` "Neither the name of John Doe nor the names of other"
+
+  it "should create files under '--directory-name'" $ do
+    root <- getCurrentDirectory
+    inTestDirectory $ hSilence [] $ do
+      Cli.run ["foo-bar-baz", "-d", "qux", "-r", (root </> "test" </> "template")]
+      doesFileExist "qux/foo-bar-baz.cabal" `shouldReturn` True
+
+  it "should run command specified with '--after-command'" $ do
+    root <- getCurrentDirectory
+    inTestDirectory $ hSilence [stdout] $ do
+      Cli.run ["foo-bar-baz", "-r", (root </> "test" </> "template"), "--after-command", "cabal sandbox init"]
+      doesFileExist "foo-bar-baz/cabal.sandbox.config" `shouldReturn` True

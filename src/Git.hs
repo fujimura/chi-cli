@@ -29,7 +29,7 @@ lsFiles = lines <$> readProcess "git" ["ls-files"] []
 
 -- | Return given config value
 config :: String -> IO String
-config name = readProcess "git" ["config", name] []
+config name = removeNewline <$> readProcess "git" ["config", name] []
 
 removeNewline :: String -> String
 removeNewline = reverse . dropWhile (=='\n') . reverse

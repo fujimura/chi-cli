@@ -1,3 +1,5 @@
+{-# LANGUAGE NamedFieldPuns  #-}
+
 module Chi
   (
     run
@@ -34,6 +36,7 @@ run option = do
     files <- fetch (source option)
     writeFiles (convertFiles option files)
     updateCabalFile option
+    runAfterCommands option
 
 fetch :: Source -> IO [File]
 fetch (Repo repo) = do
@@ -71,21 +74,22 @@ convertFiles :: Option -> [File] -> [Modified File]
 convertFiles option files = map (convert option) files
 
 convert :: Option -> File -> Modified File
-convert option file@(path,contents) = Modified (rewritePath path, substitute contents) file
+convert Option {packageName, moduleName, directoryName, author, email, year} file@(path,contents) =
+    Modified (rewritePath path, substitute contents) file
   where
     substitute :: String -> String
-    substitute = foldl1 (.) $ map (uncurry replace) [ ("package-name", packageName option)
-                                                    , ("ModuleName", moduleName option)
-                                                    , ("$author", Types.author option)
-                                                    , ("$email", email option)
-                                                    , ("$year", year option)
+    substitute = foldl1 (.) $ map (uncurry replace) [ ("package-name", packageName)
+                                                    , ("ModuleName", moduleName)
+                                                    , ("$author", author)
+                                                    , ("$email", email)
+                                                    , ("$year", year)
                                                     ]
     rewritePath :: FilePath -> FilePath
     rewritePath = addDirectoryName . replacePackageName . replaceModuleName
       where
-        addDirectoryName   = (packageName option </>)
-        replacePackageName = replace "package-name" (packageName option)
-        replaceModuleName  = replace "ModuleName" $ moduleNameToFilePath (moduleName option)
+        addDirectoryName   = (directoryName </>)
+        replacePackageName = replace "package-name" (packageName)
+        replaceModuleName  = replace "ModuleName" $ moduleNameToFilePath (moduleName)
 
 -- | Convert module name to path
 --
@@ -109,13 +113,17 @@ write (path,contents) =
     createDirectoryIfMissing True (dropFileName path) >> writeFile path contents
 
 updateCabalFile :: Option -> IO ()
-updateCabalFile opts = do
-  path <- findPackageDesc (packageName opts)
+updateCabalFile Option {directoryName, author, email} = do
+  path <- findPackageDesc directoryName
   gPkgDesc@GenericPackageDescription { PackageDescription.packageDescription = pd } <-
     readPackageDescription normal path
 
-  let pd' = pd { PackageDescription.author = Types.author opts
-               , PackageDescription.maintainer = Types.email opts
+  let pd' = pd { PackageDescription.author = author
+               , PackageDescription.maintainer = email
                }
 
   writeGenericPackageDescription path gPkgDesc { PackageDescription.packageDescription = pd' }
+
+runAfterCommands :: Option -> IO ()
+runAfterCommands Option {directoryName, afterCommands} =
+    void $ inDirectory directoryName (forM_ afterCommands (void . system))
