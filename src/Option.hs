@@ -9,30 +9,30 @@ import           Types
 
 import           Control.Applicative
 import           Data.Char           (toUpper)
-import           Data.Maybe          (fromJust, fromMaybe, catMaybes)
+import           Data.Maybe          (catMaybes, fromJust, fromMaybe)
 import           Data.Time.Calendar  (toGregorian)
 import           Data.Time.Clock     (getCurrentTime, utctDay)
 
 buildOption :: CommandLineOption -> IO Option
 buildOption copt = do
-    let packageName' = CommandLineOption.packageName copt
-        moduleName' = fromMaybe (modularize packageName') (CommandLineOption.moduleName copt)
+    let packageName'   = CommandLineOption.packageName copt
+        moduleName'    = fromMaybe (modularize packageName') (CommandLineOption.moduleName copt)
         directoryName' = fromMaybe packageName' (CommandLineOption.directoryName copt)
-        source' = fromJust $ CommandLineOption.repo copt -- TODO
-        afterCommands'  = catMaybes [ CommandLineOption.afterCommand copt ]
+        source'        = fromJust $ CommandLineOption.repo copt -- TODO
+        afterCommands' = catMaybes [ CommandLineOption.afterCommand copt ]
 
-    year' <- getCurrentYear
+    year'   <- getCurrentYear
     author' <- Git.config "user.name"
-    email' <- Git.config "user.email"
-    return  Option { packageName = packageName'
-                 , moduleName  = moduleName'
-                 , directoryName = directoryName'
-                 , author      = author'
-                 , email       = email'
-                 , year        = year'
-                 , source      = Repo source'
-                 , afterCommands = afterCommands'
-                 }
+    email'  <- Git.config "user.email"
+    return Option { packageName   = packageName'
+                  , moduleName    = moduleName'
+                  , directoryName = directoryName'
+                  , author        = author'
+                  , email         = email'
+                  , year          = year'
+                  , source        = Repo source'
+                  , afterCommands = afterCommands'
+                  }
 
 getCurrentYear :: IO String
 getCurrentYear  = do

@@ -2,12 +2,12 @@ module Cli
   ( run
   ) where
 
-import           CommandLineOption   (commandLineOption)
 import qualified Chi
+import           CommandLineOption   (commandLineOption)
 import           Option              (buildOption)
 import           Types
 
-import qualified Paths_chi  (version)
+import qualified Paths_chi           (version)
 
 import           Control.Applicative
 import           Data.Version        (showVersion)

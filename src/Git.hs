@@ -5,17 +5,12 @@ module Git
       clone
     , config
     , lsFiles
-    , expandUrl
     ) where
 
 import           Control.Applicative
-import           System.Exit
-import           System.Process      (readProcess, readProcessWithExitCode, callCommand)
 import           Control.Exception
-
-expandUrl :: String -> String
-expandUrl ('g':'h':':':xs) = "git@github.com:" ++ xs ++ ".git"
-expandUrl xs = xs
+import           System.Exit
+import           System.Process      (callCommand, readProcess)
 
 -- | Clone given repository to current directory
 clone :: String -> IO ()

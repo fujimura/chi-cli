@@ -1,4 +1,4 @@
-{-# LANGUAGE NamedFieldPuns  #-}
+{-# LANGUAGE NamedFieldPuns #-}
 
 module Chi
   (
@@ -10,24 +10,17 @@ import           Types
 
 import           Control.Exception                           (bracket_)
 import           Control.Monad
-import           Data.List                                   (intersperse, (\\))
+import           Data.List                                   (intersperse)
 import           Data.List.Split                             (splitOn)
-import           Data.Maybe                                  (fromMaybe)
-import qualified Data.Text                                   as T (pack, unpack)
-import           Data.Text.Encoding                          (decodeUtf8)
-import           Data.Text.Lazy.Encoding                     (encodeUtf8)
 import           Distribution.PackageDescription             (GenericPackageDescription (GenericPackageDescription))
 import qualified Distribution.PackageDescription             as PackageDescription
 import           Distribution.PackageDescription.Parse       (readPackageDescription)
 import           Distribution.PackageDescription.PrettyPrint (writeGenericPackageDescription)
 import           Distribution.Simple.Utils                   (findPackageDesc)
-import           Distribution.Verbosity                      as Verbosity (Verbosity, normal)
+import qualified Distribution.Verbosity                      as Verbosity
 import           System.Directory
-import           System.Directory                            (createDirectoryIfMissing)
 import           System.FilePath                             (dropFileName,
-                                                              joinPath,
-                                                              normalise,
-                                                              splitPath, (</>))
+                                                              joinPath, (</>))
 import           System.IO.Temp                              (withSystemTempDirectory)
 import           System.Process                              (system)
 
@@ -116,7 +109,7 @@ updateCabalFile :: Option -> IO ()
 updateCabalFile Option {directoryName, author, email} = do
   path <- findPackageDesc directoryName
   gPkgDesc@GenericPackageDescription { PackageDescription.packageDescription = pd } <-
-    readPackageDescription normal path
+    readPackageDescription Verbosity.normal path
 
   let pd' = pd { PackageDescription.author = author
                , PackageDescription.maintainer = email

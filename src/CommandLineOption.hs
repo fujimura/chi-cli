@@ -6,11 +6,11 @@ module CommandLineOption
 import           Options.Applicative
 
 data CommandLineOption = CommandLineOption
-                       { packageName :: String
-                       , moduleName :: Maybe String
+                       { packageName   :: String
+                       , moduleName    :: Maybe String
                        , directoryName :: Maybe FilePath
-                       , repo         :: Maybe String
-                       , afterCommand :: Maybe String
+                       , repo          :: Maybe String
+                       , afterCommand  :: Maybe String
                -- TODO        , cabalPackage :: Maybe String
                        }
 
