@@ -11,7 +11,7 @@ data CommandLineOption = CommandLineOption
                        , directoryName :: Maybe FilePath
                        , repo          :: Maybe String
                        , afterCommand  :: Maybe String
-               -- TODO        , cabalPackage :: Maybe String
+                       , cabalPackage  :: Maybe String
                        }
 
 commandLineOption :: Parser CommandLineOption
@@ -21,4 +21,4 @@ commandLineOption = CommandLineOption
    <*> optional (strOption (short 'd' <> long "directory-name" <> help "Directory to generate file"))
    <*> optional (strOption (short 'r' <> long "repository" <> help "Repository of template"))
    <*> optional (strOption (             long "after-command" <> help "Command to run after generation"))
---   <*> optional (strOption (short 'c' <> long "cabal-package" <> help "Name of cabal package"))
+   <*> optional (strOption (short 'c' <> long "cabal-package" <> help "Name of cabal package"))

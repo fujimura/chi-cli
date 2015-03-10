@@ -19,13 +19,21 @@ main :: IO ()
 main = hspec spec
 
 spec :: Spec
-spec = around_ (hSilence [stdout]) $ do
-  it "should clone from cabal package with '-c'" pending
-  it "should clone from git repository with '-r'" pending
+spec = around_ (hSilence []) $ do
+  it "should clone from cabal package with '-c'" $ do
+    root <- getCurrentDirectory
+    inTestDirectory $ do
+      system "cabal sandbox init"
+      print ("cabal sandbox add-source " ++ (joinPath [root, "test", "template"]))
+      system ("cabal sandbox add-source " ++ (joinPath [root, "test", "template"]))
+      Cli.run ["foo-bar-baz", "-c", "chi-hspec"]
+      doesFileExist "foo-bar-baz/foo-bar-baz.cabal" `shouldReturn` True
+
   it "should replace 'packange-name' in file path with first argument" $ do
     root <- getCurrentDirectory
     inTestDirectory $ do
       Cli.run ["foo-bar-baz", "-r", (root </> "test" </> "template")]
+      system "tree"
       doesFileExist "foo-bar-baz/foo-bar-baz.cabal" `shouldReturn` True
 
   it "should replace 'packange-name' in file content with first argument" $ do

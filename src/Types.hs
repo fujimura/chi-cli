@@ -17,4 +17,4 @@ data Modified a = Modified a a deriving (Eq,Ord,Show)
 
 type ConvertedFile = Modified File
 
-data Source = Repo String deriving (Eq,Ord,Show)
+data Source = Repo String | CabalPackage String deriving (Eq,Ord,Show)

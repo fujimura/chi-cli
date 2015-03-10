@@ -18,7 +18,7 @@ buildOption copt = do
     let packageName'   = CommandLineOption.packageName copt
         moduleName'    = fromMaybe (modularize packageName') (CommandLineOption.moduleName copt)
         directoryName' = fromMaybe packageName' (CommandLineOption.directoryName copt)
-        source'        = fromJust $ CommandLineOption.repo copt -- TODO
+        source'        = fromJust $ (Repo <$> CommandLineOption.repo copt) <|> (CabalPackage <$> CommandLineOption.cabalPackage copt)
         afterCommands' = catMaybes [ CommandLineOption.afterCommand copt ]
 
     year'   <- getCurrentYear
@@ -30,7 +30,7 @@ buildOption copt = do
                   , author        = author'
                   , email         = email'
                   , year          = year'
-                  , source        = Repo source'
+                  , source        = source'
                   , afterCommands = afterCommands'
                   }
 

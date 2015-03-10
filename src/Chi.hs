@@ -10,6 +10,7 @@ import           Types
 
 import           Control.Exception                           (bracket_)
 import           Control.Monad
+import           Control.Applicative
 import           Data.List                                   (intercalate,
                                                               intersperse)
 import           Data.List.Split                             (splitOn)
@@ -23,9 +24,10 @@ import           Distribution.Simple.Utils                   (findPackageDesc)
 import qualified Distribution.Verbosity                      as Verbosity
 import           System.Directory
 import           System.FilePath                             (dropFileName,
+                                                             splitPath,
                                                               joinPath, (</>))
 import           System.IO.Temp                              (withSystemTempDirectory)
-import           System.Process                              (system)
+import           System.Process                              (system, callCommand, readProcess)
 
 run :: Option -> IO ()
 run option = do
@@ -46,6 +48,31 @@ fetch (Repo repo) = do
         Git.clone repo'
         paths <- Git.lsFiles
         mapM fetchFile paths
+fetch (CabalPackage p) = do
+    inTemporaryDirectory "chi" $ do
+        callCommand $ "cabal get " ++ p
+        paths <- mapM (return . dropFirstDirectory <=< canonicalizePath) =<< getDirectoryContentsRecursively "."
+        mapM fetchFile paths
+
+dropFirstDirectory :: FilePath -> FilePath
+dropFirstDirectory path = go (splitPath path)
+  where
+    go []     = []
+    go (_:[]) = []
+    go (_:xs) = joinPath xs
+
+getDirectoryContentsRecursively :: FilePath -> IO [FilePath]
+getDirectoryContentsRecursively path = go [path]
+  where
+    go :: [FilePath] -> IO [FilePath]
+    go [] = return []
+    go (x:xs) = do
+       isDir <- doesDirectoryExist x
+       if isDir then do
+                  xs' <- filter (/= "..") <$> filter (/= ".") <$> getDirectoryContents x
+                  go (xs ++ map (x </>) xs')
+                else
+                  (x:) <$> go xs
 
 -- |Run callback in a temporary directory.
 inTemporaryDirectory :: String         -- ^ Base of temporary directory name
