@@ -10,7 +10,7 @@ import           Types
 
 import           Control.Exception                           (bracket_)
 import           Control.Monad
-import           Data.List                                   (intersperse)
+import           Data.List                                   (intersperse, intercalate)
 import           Data.List.Split                             (splitOn)
 import           Distribution.PackageDescription             (GenericPackageDescription (GenericPackageDescription))
 import qualified Distribution.PackageDescription             as PackageDescription
@@ -72,6 +72,7 @@ convert Option {packageName, moduleName, directoryName, author, email, year} fil
   where
     substitute :: String -> String
     substitute = foldl1 (.) $ map (uncurry replace) [ ("package-name", packageName)
+                                                    , ("package_name", underscorize packageName)
                                                     , ("ModuleName", moduleName)
                                                     , ("$author", author)
                                                     , ("$email", email)
@@ -81,8 +82,16 @@ convert Option {packageName, moduleName, directoryName, author, email, year} fil
     rewritePath = addDirectoryName . replacePackageName . replaceModuleName
       where
         addDirectoryName   = (directoryName </>)
-        replacePackageName = replace "package-name" (packageName)
-        replaceModuleName  = replace "ModuleName" $ moduleNameToFilePath (moduleName)
+        replacePackageName = replace "package-name" packageName
+        replaceModuleName  = replace "ModuleName" $ moduleNameToFilePath moduleName
+
+-- | Underscorize hyphenized string
+--
+-- >>> underscorize "foo-bar"
+-- "foo_bar"
+--
+underscorize :: String -> String
+underscorize = replace "-" "_"
 
 -- | Convert module name to path
 --

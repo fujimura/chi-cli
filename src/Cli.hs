@@ -22,7 +22,7 @@ parseArgs args = handleParseResult (execParserPure (prefs idm) opts args) >>= bu
     opts = info (helper <*> (version <*> commandLineOption))
       ( fullDesc
      <> progDesc "Hello."
-     <> header "cji - a template for your cli application" )
+     <> header "chi - a template for your cli application" )
     version = infoOption (showVersion Paths_chi.version)
       (  short 'v'
       <> long "version"
