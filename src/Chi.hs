@@ -10,8 +10,11 @@ import           Types
 
 import           Control.Exception                           (bracket_)
 import           Control.Monad
-import           Data.List                                   (intersperse, intercalate)
+import           Data.List                                   (intercalate,
+                                                              intersperse)
 import           Data.List.Split                             (splitOn)
+import           Data.Version                                (Version (Version))
+import           Distribution.Package                        (PackageIdentifier (PackageIdentifier), PackageName (PackageName))
 import           Distribution.PackageDescription             (GenericPackageDescription (GenericPackageDescription))
 import qualified Distribution.PackageDescription             as PackageDescription
 import           Distribution.PackageDescription.Parse       (readPackageDescription)
@@ -114,16 +117,19 @@ write (path,contents) =
     createDirectoryIfMissing True (dropFileName path) >> writeFile path contents
 
 updateCabalFile :: Option -> IO ()
-updateCabalFile Option {directoryName, author, email} = do
+updateCabalFile Option {packageName, directoryName, author, email} = do
   path <- findPackageDesc directoryName
   gPkgDesc@GenericPackageDescription { PackageDescription.packageDescription = pd } <-
     readPackageDescription Verbosity.normal path
 
-  let pd' = pd { PackageDescription.author = author
+  let pid = PackageIdentifier (PackageName packageName) (Version [0,0,1,0] [])
+      pd' = pd { PackageDescription.package    = pid
+               , PackageDescription.author     = author
                , PackageDescription.maintainer = email
                }
 
-  writeGenericPackageDescription path gPkgDesc { PackageDescription.packageDescription = pd' }
+  removeFile path
+  writeGenericPackageDescription (directoryName </> packageName ++ ".cabal" ) gPkgDesc { PackageDescription.packageDescription = pd' }
 
 runAfterCommands :: Option -> IO ()
 runAfterCommands Option {directoryName, afterCommands} =
