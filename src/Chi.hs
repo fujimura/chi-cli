@@ -102,10 +102,9 @@ moduleNameToFilePath :: String -> FilePath
 moduleNameToFilePath = joinPath . splitOn "."
 
 writeFiles :: [Modified File] -> IO ()
-writeFiles files = mapM_ write' files
+writeFiles = mapM_ write'
   where
     write' (Modified f _) = write f
-
 
 replace :: Eq a => [a] -> [a] -> [a] -> [a]
 replace a b = foldl1 (++) . intersperse b . splitOn a
