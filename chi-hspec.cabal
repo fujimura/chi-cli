@@ -1,4 +1,4 @@
-name: package-name
+name: chi-hspec
 version: 1.2.0.0
 cabal-version: >=1.8
 build-type: Simple
