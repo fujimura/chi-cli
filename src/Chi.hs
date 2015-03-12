@@ -8,11 +8,11 @@ module Chi
 import qualified Git
 import           Types
 
+import           Control.Applicative
+import           Control.Arrow                               (first)
 import           Control.Exception                           (bracket_)
 import           Control.Monad
-import           Control.Applicative
-import           Data.List                                   (intercalate,
-                                                              intersperse)
+import           Data.List                                   (intersperse)
 import           Data.List.Split                             (splitOn)
 import           Data.Version                                (Version (Version))
 import           Distribution.Package                        (PackageIdentifier (PackageIdentifier), PackageName (PackageName))
@@ -24,10 +24,11 @@ import           Distribution.Simple.Utils                   (findPackageDesc)
 import qualified Distribution.Verbosity                      as Verbosity
 import           System.Directory
 import           System.FilePath                             (dropFileName,
-                                                             splitPath,
-                                                              joinPath, (</>))
+                                                              joinPath,
+                                                              splitPath, (</>))
 import           System.IO.Temp                              (withSystemTempDirectory)
-import           System.Process                              (system, callCommand, readProcess)
+import           System.Process                              (callCommand,
+                                                              system)
 
 run :: Option -> IO ()
 run option = do
@@ -48,18 +49,20 @@ fetch (Repo repo) = do
         Git.clone repo'
         paths <- Git.lsFiles
         mapM fetchFile paths
-fetch (CabalPackage p) = do
-    inTemporaryDirectory "chi" $ do
-        callCommand $ "cabal get " ++ p
-        paths <- mapM (return . dropFirstDirectory <=< canonicalizePath) =<< getDirectoryContentsRecursively "."
-        mapM fetchFile paths
+-- TODO Handle IO exceptions
+fetch (CabalPackage p) = inTemporaryDirectory "chi" $ do
+    callCommand $ "cabal get " ++ p
+    d:_ <- getDirectoryContents "."
+    inDirectory d $ do
+      paths <- getDirectoryContentsRecursively "."
+      map (first dropFirstDirectory) <$> mapM fetchFile paths
 
 dropFirstDirectory :: FilePath -> FilePath
 dropFirstDirectory path = go (splitPath path)
   where
     go []     = []
     go (_:[]) = []
-    go (_:xs) = joinPath xs
+    go (x:_:ys) = joinPath (x:ys)
 
 getDirectoryContentsRecursively :: FilePath -> IO [FilePath]
 getDirectoryContentsRecursively path = go [path]
