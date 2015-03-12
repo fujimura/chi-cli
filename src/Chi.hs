@@ -60,8 +60,8 @@ fetch (CabalPackage p) = inTemporaryDirectory "chi" $ do
 dropFirstDirectory :: FilePath -> FilePath
 dropFirstDirectory path = go (splitPath path)
   where
-    go []     = []
-    go (_:[]) = []
+    go []       = []
+    go [_]      = []
     go (x:_:ys) = joinPath (x:ys)
 
 getDirectoryContentsRecursively :: FilePath -> IO [FilePath]
@@ -97,7 +97,7 @@ fetchFile fp = do
     return (fp,content)
 
 convertFiles :: Option -> [File] -> [Modified File]
-convertFiles option files = map (convert option) files
+convertFiles option = map (convert option)
 
 convert :: Option -> File -> Modified File
 convert Option {packageName, moduleName, directoryName, author, email, year} file@(path,contents) =

@@ -21,8 +21,8 @@ parseArgs args = handleParseResult (execParserPure (prefs idm) opts args) >>= bu
   where
     opts = info (helper <*> (version <*> commandLineOption))
       ( fullDesc
-     <> progDesc "Hello."
-     <> header "chi - a template for your cli application" )
+      <> progDesc "Hello."
+      <> header "chi - a template for your cli application" )
     version = infoOption (showVersion Paths_chi.version)
       (  short 'v'
       <> long "version"
