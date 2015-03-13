@@ -12,7 +12,7 @@ import           Control.Applicative
 import           Control.Arrow                               (first)
 import           Control.Exception                           (bracket_)
 import           Control.Monad
-import           Data.List                                   (intersperse)
+import           Data.List                                   (intersperse, (\\))
 import           Data.List.Split                             (splitOn)
 import           Data.Version                                (Version (Version))
 import           Distribution.Package                        (PackageIdentifier (PackageIdentifier), PackageName (PackageName))
@@ -33,7 +33,7 @@ import           System.Process                              (callCommand,
 run :: Option -> IO ()
 run option = do
     files <- fetch (source option)
-    writeFiles (convertFiles option files)
+    writeFiles (map (convert option) files)
     updateCabalFile option
     runAfterCommands option
 
@@ -49,21 +49,28 @@ fetch (Repo repo) = do
         Git.clone repo'
         paths <- Git.lsFiles
         mapM fetchFile paths
+
 -- TODO Handle IO exceptions
 fetch (CabalPackage p) = inTemporaryDirectory "chi" $ do
     callCommand $ "cabal get " ++ p
-    d:_ <- getDirectoryContents "."
-    inDirectory d $ do
-      paths <- getDirectoryContentsRecursively "."
-      map (first dropFirstDirectory) <$> mapM fetchFile paths
-
-dropFirstDirectory :: FilePath -> FilePath
-dropFirstDirectory path = go (splitPath path)
+    contents <- getDirectoryContents "."
+    case contents \\ [".", ".."] of
+      []  -> error "This won't happen"
+      [d] -> inDirectory d $ do
+               paths <- getDirectoryContentsRecursively "."
+               map (first dropFirstDirectory) <$> mapM fetchFile paths
+      _   -> error "This won't happen"
   where
-    go []       = []
-    go [_]      = []
-    go (x:_:ys) = joinPath (x:ys)
+    dropFirstDirectory :: FilePath -> FilePath
+    dropFirstDirectory path = go (splitPath path)
+      where
+        go []       = []
+        go [_]      = []
+        go xs@[_,_] = joinPath xs
+        go (x:_:ys) = joinPath (x:ys)
 
+-- | Get directory contents recursively.
+--
 getDirectoryContentsRecursively :: FilePath -> IO [FilePath]
 getDirectoryContentsRecursively path = go [path]
   where
@@ -83,9 +90,8 @@ inTemporaryDirectory :: String         -- ^ Base of temporary directory name
 inTemporaryDirectory name callback =
     withSystemTempDirectory name $ flip inDirectory callback
 
-
 -- |Run callback in given directory.
-inDirectory :: FilePath        -- ^ Filepath to run callback
+inDirectory :: FilePath      -- ^ Filepath to run callback
             -> IO a -> IO a  -- ^ Callback
 inDirectory path callback = do
     pwd <- getCurrentDirectory
@@ -96,9 +102,9 @@ fetchFile fp = do
     content <- readFile fp
     return (fp,content)
 
-convertFiles :: Option -> [File] -> [Modified File]
-convertFiles option = map (convert option)
-
+-- | Convert File with option. The path will be rewriten and the content
+-- will be substituted.
+-- | TODO convert? modify?
 convert :: Option -> File -> Modified File
 convert Option {packageName, moduleName, directoryName, author, email, year} file@(path,contents) =
     Modified (rewritePath path, substitute contents) file
@@ -146,21 +152,25 @@ write :: File -> IO ()
 write (path,contents) =
     createDirectoryIfMissing True (dropFileName path) >> writeFile path contents
 
+-- | Update .cabal file with given option. .cabal file will be renamed.
 updateCabalFile :: Option -> IO ()
-updateCabalFile Option {packageName, directoryName, author, email} = do
-  path <- findPackageDesc directoryName
-  gPkgDesc@GenericPackageDescription { PackageDescription.packageDescription = pd } <-
-    readPackageDescription Verbosity.normal path
+updateCabalFile option@Option {packageName, directoryName} = do
+    path <- findPackageDesc directoryName
+    gPkgDesc <- updateGenericPackageDesctiption option <$> readPackageDescription Verbosity.normal path
+    writeGenericPackageDescription (directoryName </> packageName ++ ".cabal") gPkgDesc
 
-  let pid = PackageIdentifier (PackageName packageName) (Version [0,0,1,0] [])
+-- | Update 'GenericPackageDescription' with given option.
+-- TODO Stop updating version
+updateGenericPackageDesctiption :: Option -> GenericPackageDescription -> GenericPackageDescription
+updateGenericPackageDesctiption option gPkgDesc@GenericPackageDescription { PackageDescription.packageDescription = pd } =
+  let pid = PackageIdentifier (PackageName (packageName option)) (Version [0,0,1,0] [])
       pd' = pd { PackageDescription.package    = pid
-               , PackageDescription.author     = author
-               , PackageDescription.maintainer = email
+               , PackageDescription.author     = author option
+               , PackageDescription.maintainer = email option
                }
+  in gPkgDesc { PackageDescription.packageDescription = pd' }
 
-  removeFile path
-  writeGenericPackageDescription (directoryName </> packageName ++ ".cabal" ) gPkgDesc { PackageDescription.packageDescription = pd' }
-
+-- | Run after-command given in option
 runAfterCommands :: Option -> IO ()
 runAfterCommands Option {directoryName, afterCommands} =
     void $ inDirectory directoryName (forM_ afterCommands (void . system))
