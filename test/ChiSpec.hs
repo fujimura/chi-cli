@@ -23,12 +23,9 @@ spec = around_ (hSilence []) $ do
   it "should clone from cabal package with '-c'" $ do
     root <- getCurrentDirectory
     inTestDirectory $ do
-      Cli.run ["foo-bar-baz", "-c", (root </> "test" </> "cabal-package" </> "package-name-1.2.0.0.tar.gz")]
-      doesFileExist "foo-bar-baz/foo-bar-baz.cabal" `shouldReturn` True
-
-  it "should clone from cabal package with '-c'" $ do
-    root <- getCurrentDirectory
-    inTestDirectory $ do
+      -- TODO Need to update tarball along with test/package. It'd be great
+      -- if we can create tarball on demand or `cabal get` from local
+      -- repository.
       Cli.run ["foo-bar-baz", "-c", (root </> "test" </> "cabal-package" </> "package-name-1.2.0.0.tar.gz")]
       doesFileExist "foo-bar-baz/foo-bar-baz.cabal" `shouldReturn` True
 
@@ -37,6 +34,12 @@ spec = around_ (hSilence []) $ do
     inTestDirectory $ do
       Cli.run ["foo-bar-baz", "-r", (root </> "test" </> "template")]
       doesFileExist "foo-bar-baz/foo-bar-baz.cabal" `shouldReturn` True
+
+  it "should remove original .cabal file" $ do
+    root <- getCurrentDirectory
+    inTestDirectory $ do
+      Cli.run ["foo-bar-baz", "-r", (root </> "test" </> "template")]
+      doesFileExist "foo-bar-baz/chi-hspec.cabal" `shouldReturn` False
 
   it "should replace 'packange-name' in file content with first argument" $ do
     root <- getCurrentDirectory

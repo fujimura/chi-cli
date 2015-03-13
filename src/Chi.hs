@@ -157,6 +157,7 @@ updateCabalFile :: Option -> IO ()
 updateCabalFile option@Option {packageName, directoryName} = do
     path <- findPackageDesc directoryName
     gPkgDesc <- updateGenericPackageDesctiption option <$> readPackageDescription Verbosity.normal path
+    removeFile path
     writeGenericPackageDescription (directoryName </> packageName ++ ".cabal") gPkgDesc
 
 -- | Update 'GenericPackageDescription' with given option.
