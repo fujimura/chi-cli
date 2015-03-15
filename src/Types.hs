@@ -13,7 +13,7 @@ data Option = Option
 
 type File = (FilePath,String)
 
-data Modified a = Modified a a deriving (Eq,Ord,Show)
+data Modified a = Modified a a deriving (Eq,Ord,Show) -- TODO No way to distinguish modified/original
 
 type ConvertedFile = Modified File
 
