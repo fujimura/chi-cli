@@ -18,13 +18,16 @@ import           Data.Version                                (Version (Version))
 import           Distribution.Package                        (PackageIdentifier (PackageIdentifier), PackageName (PackageName))
 import           Distribution.PackageDescription             (GenericPackageDescription (GenericPackageDescription))
 import qualified Distribution.PackageDescription             as PackageDescription
-import           Distribution.PackageDescription.Parse       (readPackageDescription)
-import           Distribution.PackageDescription.PrettyPrint (writeGenericPackageDescription)
+import           Distribution.PackageDescription.Parse       (readPackageDescription, parsePackageDescription, ParseResult(..))
+import           Distribution.PackageDescription.PrettyPrint (writeGenericPackageDescription, showGenericPackageDescription)
 import           Distribution.Simple.Utils                   (findPackageDesc)
 import qualified Distribution.Verbosity                      as Verbosity
 import           System.Directory
 import           System.FilePath                             (dropFileName,
                                                               joinPath,
+                                                              takeExtension,
+                                                              extSeparator,
+                                                              replaceBaseName,
                                                               splitPath, (</>))
 import           System.IO.Temp                              (withSystemTempDirectory)
 import           System.Process                              (callCommand,
@@ -33,8 +36,7 @@ import           System.Process                              (callCommand,
 run :: Option -> IO ()
 run option = do
     files <- fetch (source option)
-    writeFiles (map (convert option) files)
-    updateCabalFile option
+    writeFiles (map (updateCabalFile option . convert option) files)
     runAfterCommands option
 
 fetch :: Source -> IO [File]
@@ -152,13 +154,22 @@ write :: File -> IO ()
 write (path,contents) =
     createDirectoryIfMissing True (dropFileName path) >> writeFile path contents
 
--- | Update .cabal file with given option. .cabal file will be renamed.
-updateCabalFile :: Option -> IO ()
-updateCabalFile option@Option {packageName, directoryName} = do
-    path <- findPackageDesc directoryName
-    gPkgDesc <- updateGenericPackageDesctiption option <$> readPackageDescription Verbosity.normal path
-    removeFile path
-    writeGenericPackageDescription (directoryName </> packageName ++ ".cabal") gPkgDesc
+updateCabalFile :: Option -> Modified File -> Modified File
+updateCabalFile option m@(Modified file orig) =
+    if isCabalFile file
+      then Modified (updateCabalFile' option file) orig
+      else m
+
+isCabalFile :: File -> Bool
+isCabalFile (path,_) = ((== extSeparator:"cabal") . takeExtension) path
+
+updateCabalFile' :: Option -> File -> File
+updateCabalFile' option@Option {packageName} file@(path,content) = do
+    let path' = replaceBaseName path packageName
+    case parsePackageDescription content of
+      ParseFailed e -> error $ show e -- TODO
+      ParseOk warnings x ->
+        (path', showGenericPackageDescription (updateGenericPackageDesctiption option x)) -- TODO warning
 
 -- | Update 'GenericPackageDescription' with given option.
 -- TODO Stop updating version
