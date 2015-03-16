@@ -109,7 +109,7 @@ fetchFile fp = do
 -- | TODO convert? modify?
 convert :: Option -> File -> Modified File
 convert Option {packageName, moduleName, directoryName, author, email, year} file@(path,contents) =
-    Modified (rewritePath path, substitute contents) file
+    Modified (rewritePath path, substitute contents) (Original file)
   where
     substitute :: String -> String
     substitute = foldl1 (.) $ map (uncurry replace) [ ("package-name", packageName)
