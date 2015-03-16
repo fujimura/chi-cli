@@ -21,7 +21,7 @@ parseArgs args = handleParseResult (execParserPure (prefs idm) opts args) >>= bu
   where
     opts = info (helper <*> (version <*> commandLineOption))
       ( fullDesc
-      <> header "chi - a template for your cli application" )
+      <> header "chi - Generate scaffold for a Haskell project")
     version = infoOption (showVersion Paths_chi.version)
       (  short 'v'
       <> long "version"
